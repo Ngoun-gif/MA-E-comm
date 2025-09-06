@@ -4,10 +4,17 @@ project(runner LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
+<<<<<<< HEAD
 set(BINARY_NAME "ecoom")
 # The unique GTK application identifier for this application. See:
 # https://wiki.gnome.org/HowDoI/ChooseApplicationID
 set(APPLICATION_ID "com.example.ecoom")
+=======
+set(BINARY_NAME "ecomm")
+# The unique GTK application identifier for this application. See:
+# https://wiki.gnome.org/HowDoI/ChooseApplicationID
+set(APPLICATION_ID "com.example.ecomm")
+>>>>>>> f499fd48891270ae5d783c46d34a3b4852042bc8
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.

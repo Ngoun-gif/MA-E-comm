@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # ecoom
+=======
+# ecomm
+>>>>>>> f499fd48891270ae5d783c46d34a3b4852042bc8
 
 A new Flutter project.
 

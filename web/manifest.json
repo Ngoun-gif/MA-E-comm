@@ -1,6 +1,11 @@
 {
+<<<<<<< HEAD
     "name": "ecoom",
     "short_name": "ecoom",
+=======
+    "name": "ecomm",
+    "short_name": "ecomm",
+>>>>>>> f499fd48891270ae5d783c46d34a3b4852042bc8
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

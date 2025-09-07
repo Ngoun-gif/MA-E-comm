@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-<<<<<<< HEAD
+
     namespace = "com.example.ecoom"
-=======
+
     namespace = "com.example.ecomm"
->>>>>>> f499fd48891270ae5d783c46d34a3b4852042bc8
+
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -25,11 +25,11 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-<<<<<<< HEAD
+
         applicationId = "com.example.ecoom"
-=======
+
         applicationId = "com.example.ecomm"
->>>>>>> f499fd48891270ae5d783c46d34a3b4852042bc8
+
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

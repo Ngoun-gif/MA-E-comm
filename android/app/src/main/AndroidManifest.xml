@@ -1,10 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-<<<<<<< HEAD
-        android:label="ecoom"
-=======
+
         android:label="ecomm"
->>>>>>> f499fd48891270ae5d783c46d34a3b4852042bc8
+
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

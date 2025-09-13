@@ -1,11 +1,10 @@
-// lib/screens/home/widgets/product_widget.dart
 import 'package:flutter/material.dart';
 
 class ProductCard extends StatelessWidget {
   final String name;
-  final String price;
+  final double price;
   final String image;
-  final int rating;
+  final double rating;
   final bool isFavorite;
   final VoidCallback onAddToCart;
   final VoidCallback onFavoriteTap;
@@ -43,16 +42,27 @@ class ProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ✅ Image + Favorite icon
+            // ✅ Product image from API + Favorite icon
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                  child: Image.asset(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(12),
+                  ),
+                  child: Image.network(
                     image,
                     width: double.infinity,
-                    height: 100,
+                    height: 120,
                     fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      height: 120,
+                      color: Colors.grey[200],
+                      child: const Icon(
+                        Icons.image_not_supported,
+                        size: 40,
+                        color: Colors.grey,
+                      ),
+                    ),
                   ),
                 ),
                 Positioned(
@@ -77,7 +87,7 @@ class ProductCard extends StatelessWidget {
                 children: List.generate(
                   5,
                       (index) => Icon(
-                    index < rating ? Icons.star : Icons.star_border,
+                    index < rating.round() ? Icons.star : Icons.star_border,
                     color: Colors.orange,
                     size: 14,
                   ),
@@ -90,16 +100,17 @@ class ProductCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Text(
                 name,
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
+                  height: 1.2, // Adjust line height to prevent overflow
                 ),
               ),
             ),
 
-            const Spacer(),
+            const SizedBox(height: 4), // Add some spacing
 
             // 💵 Price + 🛒 Cart
             Padding(
@@ -108,7 +119,7 @@ class ProductCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "\$$price",
+                    "\$${price.toStringAsFixed(2)}",
                     style: const TextStyle(
                       fontSize: 14,
                       color: Colors.green,

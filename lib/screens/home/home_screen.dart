@@ -1,11 +1,12 @@
-// lib/screens/home/home_screen.dart
 import 'package:flutter/material.dart';
-import '../../routes.dart';
 import 'widgets/banner_widget.dart';
 import 'widgets/product_widget.dart';
 import 'widgets/category_widget.dart';
 import '../../widgets/main_app_bar.dart';
 import '../../widgets/main_drawer_bar.dart';
+import 'product_provider.dart';
+import '../../models/product.dart';
+import '../product_detail/product_detail_screen.dart'; // Import the product detail screen
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,30 +16,29 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final List<Map<String, dynamic>> specialOffers = [
-    {'name': 'Mango Juice', 'price': '2.50', 'image': 'assets/mango.jpg', 'rating': 4, 'isFavorite': false},
-    {'name': 'Coca-Cola', 'price': '1.50', 'image': 'assets/coke.jpg', 'rating': 5, 'isFavorite': false},
-    {'name': 'Sprite', 'price': '2.50', 'image': 'assets/sprite.jpg', 'rating': 4, 'isFavorite': false},
-  ];
+  late Future<List<String>> _categoriesFuture;
 
-  final List<Map<String, dynamic>> newProducts = [
-    {'name': 'Fresh Juice', 'price': '2.50', 'image': 'assets/fresh_juice.jpg', 'rating': 4, 'isFavorite': false},
-    {'name': 'Yogurt', 'price': '2.50', 'image': 'assets/yogurt.jpg', 'rating': 5, 'isFavorite': false},
-    {'name': 'Red Bull', 'price': '2.50', 'image': 'assets/red_bull.jpg', 'rating': 3, 'isFavorite': false},
-  ];
+  // New futures for clean-label sections
+  late Future<List<ProductModel>> _mensClothingFuture;
+  late Future<List<ProductModel>> _jeweleryFuture;
+  late Future<List<ProductModel>> _electronicsFuture;
+  late Future<List<ProductModel>> _womensClothingFuture;
 
-  final List<Map<String, dynamic>> categories = [
-    {'name': 'Vegetables', 'icon': Icons.local_florist},
-    {'name': 'Fast Food', 'icon': Icons.fastfood},
-    {'name': 'Foods', 'icon': Icons.local_dining},
-    {'name': 'Drinks', 'icon': Icons.local_drink},
-    {'name': 'Fruits', 'icon': Icons.local_grocery_store},
-  ];
+  @override
+  void initState() {
+    super.initState();
 
-  void _handleFavoriteTap(List<Map<String, dynamic>> list, int index) {
-    setState(() {
-      list[index]['isFavorite'] = !list[index]['isFavorite'];
-    });
+    _categoriesFuture = ProductProvider.fetchCategories();
+
+    // Fetch products by exact API category name for clean-labeled sections
+    _mensClothingFuture = ProductProvider.fetchProductsByCategory(
+      "men's clothing",
+    );
+    _jeweleryFuture = ProductProvider.fetchProductsByCategory("jewelery");
+    _electronicsFuture = ProductProvider.fetchProductsByCategory("electronics");
+    _womensClothingFuture = ProductProvider.fetchProductsByCategory(
+      "women's clothing",
+    );
   }
 
   @override
@@ -54,101 +54,302 @@ class _HomeScreenState extends State<HomeScreen> {
             const BannerWidget(),
             const SizedBox(height: 20),
 
-            // Categories
+            // 🔹 SHOP BY CATEGORIES — UNCHANGED (RAW API NAMES + ICONS)
             _buildSectionHeader("Shop By Categories", () {
               debugPrint("Tapped on 'See All' Categories");
             }),
             const SizedBox(height: 10),
-            SizedBox(
-              height: 100,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: categories.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 16),
-                itemBuilder: (context, index) {
-                  final item = categories[index];
-                  return CategoryItem(
-                    name: item['name'],
-                    icon: item['icon'],
-                    onTap: () => debugPrint("Tapped on ${item['name']}"),
+            FutureBuilder<List<String>>(
+              future: _categoriesFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox(
+                    height: 80,
+                    child: Center(child: CircularProgressIndicator()),
                   );
-                },
-              ),
-            ),
+                } else if (snapshot.hasError) {
+                  return Text('Error loading categories: ${snapshot.error}');
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Text('No categories found');
+                } else {
+                  final categories = snapshot.data!;
+                  return SizedBox(
+                    height: 100,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: categories.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 16),
+                      itemBuilder: (context, index) {
+                        final name = categories[index];
 
-            const SizedBox(height: 0),
+                        IconData icon;
+                        if (name == "men's clothing") {
+                          icon = Icons.male;
+                        } else if (name == "jewelery") {
+                          icon = Icons.diamond;
+                        } else if (name == "electronics") {
+                          icon = Icons.phone_iphone;
+                        } else if (name == "women's clothing") {
+                          icon = Icons.female;
+                        } else {
+                          icon = Icons.local_florist;
+                        }
 
-            // Special Offers
-            _buildSectionHeader("Special Offers", () {
-              debugPrint("Tapped on 'See All' Special Offers");
-            }),
-            const SizedBox(height: 10),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: specialOffers.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 7,
-                mainAxisSpacing: 9,
-                childAspectRatio: 0.55,
-              ),
-              itemBuilder: (context, index) {
-                final item = specialOffers[index];
-                return ProductCard(
-                  name: item['name'],
-                  price: item['price'],
-                  image: item['image'],
-                  rating: item['rating'],
-                  isFavorite: item['isFavorite'],
-                  onAddToCart: () => debugPrint("Added ${item['name']} to cart"),
-                  onFavoriteTap: () => _handleFavoriteTap(specialOffers, index),
-                  onTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      AppRoutes.productDetail,
-                      arguments: item,
-                    );
-                  },
-                );
+                        return CategoryItem(
+                          name: name,
+                          icon: icon,
+                          onTap: () {
+                            debugPrint('Tapped category: $name');
+                          },
+                        );
+                      },
+                    ),
+                  );
+                }
               },
             ),
 
             const SizedBox(height: 20),
 
-            // New Products
-            _buildSectionHeader("New Products", () {
-              debugPrint("Tapped on 'See All' New Products");
+            // 🔹 MEN — Clean label, raw data source
+            _buildSectionHeader("Men", () {
+              debugPrint("Tapped on 'Men' section");
             }),
             const SizedBox(height: 10),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: newProducts.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-                childAspectRatio: 0.55,
-              ),
-              itemBuilder: (context, index) {
-                final item = newProducts[index];
-                return ProductCard(
-                  name: item['name'],
-                  price: item['price'],
-                  image: item['image'],
-                  rating: item['rating'],
-                  isFavorite: item['isFavorite'],
-                  onAddToCart: () => debugPrint("Added ${item['name']} to cart"),
-                  onFavoriteTap: () => _handleFavoriteTap(newProducts, index),
-                  onTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      AppRoutes.productDetail,
-                      arguments: item,
-                    );
-                  },
-                );
+            FutureBuilder<List<ProductModel>>(
+              future: _mensClothingFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox(
+                    height: 150,
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                } else if (snapshot.hasError) {
+                  return Text(
+                    'Error loading men\'s clothing: ${snapshot.error}',
+                  );
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Text('No products available');
+                } else {
+                  final products = snapshot.data!;
+                  return SizedBox(
+                    height: 220, // Adjust height as needed
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: products.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 16),
+                      itemBuilder: (context, index) {
+                        final product = products[index];
+                        return SizedBox(
+                          width: 120, // Adjust width as needed
+                          child: ProductCard(
+                            name: product.title,
+                            price: product.price,
+                            image: product.image,
+                            rating: product.rating.rate,
+                            isFavorite: false,
+                            onAddToCart: () =>
+                                debugPrint("Added ${product.title} to cart"),
+                            onFavoriteTap: () => debugPrint(
+                                "Toggled favorite on ${product.title}"),
+                            onTap: () {
+                              // Navigate to product detail screen
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ProductDetailScreen(),
+                                  settings: RouteSettings(arguments: product),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                }
+              },
+            ),
+
+            const SizedBox(height: 20),
+
+            // 🔹 JEWELRY — Clean label, raw data source
+            _buildSectionHeader("Jewelry", () {
+              debugPrint("Tapped on 'Jewelry' section");
+            }),
+            const SizedBox(height: 10),
+            FutureBuilder<List<ProductModel>>(
+              future: _jeweleryFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox(
+                    height: 150,
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                } else if (snapshot.hasError) {
+                  return Text('Error loading jewelery: ${snapshot.error}');
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Text('No products available');
+                } else {
+                  final products = snapshot.data!;
+                  return SizedBox(
+                    height: 220, // Adjust height as needed
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: products.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 16),
+                      itemBuilder: (context, index) {
+                        final product = products[index];
+                        return SizedBox(
+                          width: 120, // Adjust width as needed
+                          child: ProductCard(
+                            name: product.title,
+                            price: product.price,
+                            image: product.image,
+                            rating: product.rating.rate,
+                            isFavorite: false,
+                            onAddToCart: () =>
+                                debugPrint("Added ${product.title} to cart"),
+                            onFavoriteTap: () => debugPrint(
+                                "Toggled favorite on ${product.title}"),
+                            onTap: () {
+                              // Navigate to product detail screen
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ProductDetailScreen(),
+                                  settings: RouteSettings(arguments: product),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                }
+              },
+            ),
+
+            const SizedBox(height: 20),
+
+            // 🔹 ELECTRONICS — Clean label, raw data source
+            _buildSectionHeader("Electronics", () {
+              debugPrint("Tapped on 'Electronics' section");
+            }),
+            const SizedBox(height: 10),
+            FutureBuilder<List<ProductModel>>(
+              future: _electronicsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox(
+                    height: 150,
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                } else if (snapshot.hasError) {
+                  return Text('Error loading electronics: ${snapshot.error}');
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Text('No products available');
+                } else {
+                  final products = snapshot.data!;
+                  return SizedBox(
+                    height: 220, // Adjust height as needed
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: products.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 16),
+                      itemBuilder: (context, index) {
+                        final product = products[index];
+                        return SizedBox(
+                          width: 120, // Adjust width as needed
+                          child: ProductCard(
+                            name: product.title,
+                            price: product.price,
+                            image: product.image,
+                            rating: product.rating.rate,
+                            isFavorite: false,
+                            onAddToCart: () =>
+                                debugPrint("Added ${product.title} to cart"),
+                            onFavoriteTap: () => debugPrint(
+                                "Toggled favorite on ${product.title}"),
+                            onTap: () {
+                              // Navigate to product detail screen
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ProductDetailScreen(),
+                                  settings: RouteSettings(arguments: product),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                }
+              },
+            ),
+
+            const SizedBox(height: 20),
+
+            // 🔹 WOMEN — Clean label, raw data source
+            _buildSectionHeader("Women", () {
+              debugPrint("Tapped on 'Women' section");
+            }),
+            const SizedBox(height: 10),
+            FutureBuilder<List<ProductModel>>(
+              future: _womensClothingFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox(
+                    height: 150,
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                } else if (snapshot.hasError) {
+                  return Text(
+                    'Error loading women\'s clothing: ${snapshot.error}',
+                  );
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Text('No products available');
+                } else {
+                  final products = snapshot.data!;
+                  return SizedBox(
+                    height: 220, // Adjust height as needed
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: products.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 16),
+                      itemBuilder: (context, index) {
+                        final product = products[index];
+                        return SizedBox(
+                          width: 120, // Adjust width as needed
+                          child: ProductCard(
+                            name: product.title,
+                            price: product.price,
+                            image: product.image,
+                            rating: product.rating.rate,
+                            isFavorite: false,
+                            onAddToCart: () =>
+                                debugPrint("Added ${product.title} to cart"),
+                            onFavoriteTap: () => debugPrint(
+                                "Toggled favorite on ${product.title}"),
+                            onTap: () {
+                              // Navigate to product detail screen
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ProductDetailScreen(),
+                                  settings: RouteSettings(arguments: product),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                }
               },
             ),
 
@@ -163,7 +364,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
         TextButton(onPressed: onSeeAll, child: const Text("See All")),
       ],
     );

@@ -1,23 +1,25 @@
-// lib/screens/product_detail/product_detail_screen.dart
 import 'package:flutter/material.dart';
+import '../../models/product.dart';
+import '../home/product_provider.dart';
 
 class ProductDetailScreen extends StatelessWidget {
   const ProductDetailScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Get product data from arguments
-    final Map<String, dynamic> product =
-    ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    // ✅ Get the real ProductModel object
+    final ProductModel product = ModalRoute.of(context)!.settings.arguments as ProductModel;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Detail"),
+        title: const Text("Product Detail"),
         centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.shopping_cart),
-            onPressed: () {},
+            onPressed: () {
+              debugPrint("Added ${product.title} to cart");
+            },
           ),
         ],
       ),
@@ -31,11 +33,16 @@ class ProductDetailScreen extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Image.asset(
-                    product['image'],
+                  child: Image.network(
+                    product.image,
                     height: 220,
                     width: double.infinity,
                     fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      height: 220,
+                      color: Colors.grey[200],
+                      child: const Icon(Icons.image_not_supported, size: 40, color: Colors.grey),
+                    ),
                   ),
                 ),
                 Positioned(
@@ -45,7 +52,9 @@ class ProductDetailScreen extends StatelessWidget {
                     backgroundColor: Colors.white,
                     child: IconButton(
                       icon: const Icon(Icons.favorite_border, color: Colors.red),
-                      onPressed: () {},
+                      onPressed: () {
+                        debugPrint("Toggled favorite on ${product.title}");
+                      },
                     ),
                   ),
                 ),
@@ -53,22 +62,21 @@ class ProductDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // ✅ Name + Rating + Price
+            // ✅ Title
             Text(
-              product['name'],
+              product.title,
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
 
+            // ✅ Rating
             Row(
               children: [
                 Row(
                   children: List.generate(
                     5,
                         (index) => Icon(
-                      index < product['rating']
-                          ? Icons.star
-                          : Icons.star_border,
+                      index < product.rating.rate.floor() ? Icons.star : Icons.star_border,
                       color: Colors.orange,
                       size: 18,
                     ),
@@ -76,36 +84,64 @@ class ProductDetailScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  "(${product['rating'].toString()}.0)",
+                  "(${product.rating.rate.toStringAsFixed(1)} from ${product.rating.count} reviews)",
                   style: const TextStyle(color: Colors.grey),
                 ),
               ],
             ),
             const SizedBox(height: 12),
 
-            // ✅ Price + Buttons
+            // ✅ Price
             Text(
-              "\$${product['price']}",
+              "\$${product.price.toStringAsFixed(2)}",
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.green,
               ),
             ),
+            const SizedBox(height: 8),
+
+            // ✅ Category
+            Text(
+              product.category.toUpperCase(),
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.blue,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             const SizedBox(height: 12),
 
+            // ✅ Description
+            Text(
+              product.description,
+              style: const TextStyle(
+                color: Colors.black87,
+                height: 1.5,
+                fontSize: 15,
+              ),
+              textAlign: TextAlign.justify,
+            ),
+            const SizedBox(height: 20),
+
+            // ✅ Buttons
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      debugPrint("Added ${product.title} to cart");
+                    },
                     child: const Text("Add To Cart"),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      debugPrint("Bought ${product.title}");
+                    },
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
                     child: const Text("Buy Now"),
                   ),
@@ -114,90 +150,87 @@ class ProductDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // ✅ Description
+            // ✅ Related Products
             const Text(
-              "Descriptions",
+              "Related Products",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              "Mango juice is a sweet and tangy beverage made by extracting "
-                  "the liquid from mangoes, often diluted with water to achieve "
-                  "a desired consistency...",
-              style: TextStyle(color: Colors.black87, height: 1.5),
-            ),
-            const SizedBox(height: 20),
-
-            // ✅ Related Products
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  "Related Products",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                TextButton(
-                  onPressed: () {},
-                  child: const Text("See All"),
-                ),
-              ],
-            ),
-            SizedBox(
-              height: 200,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: 3,
-                itemBuilder: (context, index) {
-                  final related = [
-                    {'name': 'Fresh Juice', 'price': '2.50', 'image': 'assets/fresh_juice.jpg'},
-                    {'name': 'Yogurt', 'price': '2.50', 'image': 'assets/yogurt.jpg'},
-                    {'name': 'Red Bull', 'price': '2.50', 'image': 'assets/red_bull.jpg'},
-                  ][index];
-
-                  return Container(
-                    width: 140,
-                    height: 2000,
-                    margin: const EdgeInsets.only(right: 12),
-                    child: Card(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ClipRRect(
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                            child: Image.asset(
-                              related['image']!,
-                              height: 100,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              related['name']!,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            const SizedBox(height: 12),
+            FutureBuilder<List<ProductModel>>(
+              future: ProductProvider.fetchRelatedProducts(product.category, product.id),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return const Text('Failed to load related products');
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Text('No related products found');
+                } else {
+                  final related = snapshot.data!;
+                  return SizedBox(
+                    height: 220,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: related.length,
+                      itemBuilder: (context, index) {
+                        final item = related[index];
+                        return Container(
+                          width: 140,
+                          margin: const EdgeInsets.only(right: 12),
+                          child: Card(
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("\$${related['price']}"),
-                                Icon(Icons.shopping_cart, size: 16, color: Colors.blue),
+                                ClipRRect(
+                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                                  child: Image.network(
+                                    item.image,
+                                    height: 100,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => Container(
+                                      height: 100,
+                                      color: Colors.grey[200],
+                                      child: const Icon(Icons.image_not_supported, size: 30, color: Colors.grey),
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    item.title,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text("\$${item.price.toStringAsFixed(2)}"),
+                                      IconButton(
+                                        icon: const Icon(Icons.add_shopping_cart, color: Colors.blue),
+                                        onPressed: () {
+                                          debugPrint("Added ${item.title} to cart");
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ],
                             ),
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
                   );
-                },
-              ),
+                }
+              },
             ),
+            const SizedBox(height: 20),
           ],
         ),
       ),

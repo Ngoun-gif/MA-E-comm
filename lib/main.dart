@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'routes.dart';
+import 'models/product.dart';
 
 // Screens
 import 'screens/splash/splash_screen.dart';
